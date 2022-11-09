@@ -13,21 +13,21 @@ public enum TemperatureLevel: String, CaseIterable, Identifiable {
     case medium
     case high
     
-    var id: Self { self }
+    public var id: Self { self }
 }
 
 // 温度记录，为温度柱状图表提供数据
 public struct TemperatureRecord: Identifiable {
     var value: Double
     var timestamp: Date
-    var id = UUID()
+    public var id = UUID()
 }
 
 // 湿度记录，为湿度柱状图表提供数据
 public struct HumidityRecord: Identifiable {
     var value: Double
     var timestamp: Date
-    var id = UUID()
+    public var id = UUID()
 }
 
 // 温度状态，包含一个以标准单位真实值表示温度数值的 value 属性
