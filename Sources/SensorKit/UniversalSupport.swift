@@ -9,20 +9,25 @@ import SwiftUI
 import UniformTypeIdentifiers
 import Network
 
+public enum SensorCategory {
+    case illuminance, dht
+}
+
+public struct SensorMonitorOptions {
+    var port: String = "8080"
+}
+
 // 将字符串拷贝到系统剪贴板
-func copyToClipBoard(textToCopy: String) {
+public func copyToClipBoard(textToCopy: String) {
 #if os(macOS)
     let pasteBoard = NSPasteboard.general
     pasteBoard.clearContents()
     pasteBoard.setString(textToCopy, forType: .string)
-#else
+#elseif os(iOS)
     UIPasteboard.general.setValue(textToCopy,
                                   forPasteboardType: UTType.plainText.identifier)
 #endif
 }
-
-// 可选的波特率
-let availableBaudRates: [Int] = [460800, 345600, 230400, 115200, 57600, 38400, 19200, 9600, 4800, 2400, 1800, 1200, 600, 300]
 
 extension Int: Identifiable {
     public typealias ID = Int
@@ -107,4 +112,37 @@ extension String {
         }
     }
     
+}
+
+
+public var wifiIP: String? {
+    var address: String?
+    var ifaddr: UnsafeMutablePointer<ifaddrs>? = nil
+    
+    guard getifaddrs(&ifaddr) == 0 else {
+        return nil
+    }
+    guard let firstAddr = ifaddr else {
+        return nil
+    }
+    
+    for ifptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+        let interface = ifptr.pointee
+        // Check for IPV4 or IPV6 interface
+        let addrFamily = interface.ifa_addr.pointee.sa_family
+        if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
+            // Check interface name
+            let name = String(cString: interface.ifa_name)
+            if name == "en0" {
+                // Convert interface address to a human readable string
+                var addr = interface.ifa_addr.pointee
+                var hostName = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                getnameinfo(&addr,socklen_t(interface.ifa_addr.pointee.sa_len), &hostName, socklen_t(hostName.count), nil, socklen_t(0), NI_NUMERICHOST)
+                address = String(cString: hostName)
+            }
+        }
+    }
+    
+    freeifaddrs(ifaddr)
+    return address
 }
